@@ -1,0 +1,152 @@
+---
+title: "Vignette Title"
+author: "Vignette Author "
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>" 
+)
+
+if(!require(knitr)){
+  install.packages("knitr", repos='http://cran.us.r-project.org')
+}
+if(!require(rmarkdown)){
+  install.packages("rmarkdown", repos='http://cran.us.r-project.org')
+}
+if(!require(plyr)){
+  install.packages("plyr", repos='http://cran.us.r-project.org')
+}
+if(!require(reshape2)){
+  install.packages("reshape2", repos='http://cran.us.r-project.org')
+}
+if(!require(ggplot2)){
+  install.packages("ggplot2", repos='http://cran.us.r-project.org')
+}
+if(!require(scales)){
+  install.packages("scales", repos='http://cran.us.r-project.org')
+}
+if(!require(MuMIn)){
+  install.packages("MuMIn", repos='http://cran.us.r-project.org')
+}
+if(!require(rsq)){
+  install.packages("rsq", repos='http://cran.us.r-project.org')
+}
+
+
+library(ggplot2)
+library(plyr)
+library(LUMCONplants)
+
+```
+
+
+```{r, echo=FALSE, results='asis'}
+
+stemDat$moYr <- paste0(stemDat$mo, "-", substr(stemDat$yr, 3, 4))
+stemDat <- seasonLabel(data = stemDat)
+stemDat$seas <- substr(stemDat$season, 1, 4)
+stemDat$plantYr <- as.numeric(paste0(20, substr(stemDat$season, 6, 7))) # doesn't split winter samples (Jan 2018 is in winter 2017)
+
+
+### separate plot As for allometry work
+stm <- stemDat[stemDat$plot %in% "A", ]
+
+
+
+### allometry models
+# nls(mass_tot ~ I(a * hgt^b), start = list(a = 0.2, b = 0.2), data = stm[(stm$site %in% "LUM1") & (stm$status %in% "LIVE") & (stm$seas %in% "fall"), ])
+# models <- dlply(stm, .(site, season, status), function(x) 
+#   nls(mass_tot ~ I(a * hgt^b), start = list(a = 0.2, b = 0.2), data = x)) 
+# ldply(models, coef)
+
+models.hiRes <- ddply(stm, .(site, seas), function(x) 
+  getParams(dataset = x))
+models.reg <- ddply(stm, .(region, seas, plantYr), function(x) 
+  getParams(dataset = x))
+
+models            <- ddply(stm, .(region, seas), function(x) 
+  getParams(dataset = x))
+dead.allom        <- getParams(dataset = stm)
+dead.allom$region <- "all"
+dead.allom$seas   <- "all"
+
+models <- rbind.fill(models, dead.allom)
+
+
+ggplot(aes(y = exp.live, x = coef.live, colour = seas), data = models) + geom_point() + theme_classic() + labs(y = "exponent", x = "coefficient")
+# spring = very low coefficients, high exponents
+
+ggplot(aes(y = exp.live, x = coef.live, colour = seas), data = models.reg) + geom_point() + theme_classic() + labs(y = "exponent", x = "coefficient") + facet_grid(. ~ plantYr)
+
+
+
+tmp <- stm[(stm$region %in% "LUMCON") & (stm$season %in% 
+                                           "wint 17"), ]
+# tail(tmp)
+# tail(tmp[, c(1:5, 9:15)], 150)
+# tmp[which(tmp$hgt > 100), c(1:5, 9:15)]
+# tmp[which(tmp$mass_tot < 5) & which(tmp$hgt > 100) & which(!is.na(tmp$mass_tot)), c(1:5, 9:15)]
+
+ggplot(aes(y = mass_tot, x = hgt, colour = site), data = tmp) + geom_point() + theme_classic() + labs(y = "mass", x = "hgt")
+
+ggplot(aes(y = mass_tot, x = hgt, colour = site), data = stm[stm$region %in% "LUMCON", ]) + 
+  geom_point() + theme_classic() + labs(y = "mass", x = "hgt") + 
+  facet_grid(seas ~ plantYr)
+
+stm[(stm$region %in% "LUMCON") & (stm$plantYr == 2017) & (stm$seas %in% "wint"),  c(1:5, 9:15)]
+
+
+
+
+# Apply allometry to un-weighed stems -------------------------------------
+
+### Generate estimates from season-region models and pooled data 
+for (i in 1:nrow(stemDat)) {
+  # identify region and season
+  targRegion <- stemDat$region[i]
+  targetSeas <- stemDat$seas[i]
+  
+  # find seasonal allometry parameters for the region
+  if (stemDat$status[i] %in% "LIVE") {
+    coefficient <- models$coef.live[(models$region %in% targRegion) & (models$seas %in% targetSeas)]
+    exponent    <- models$exp.live[(models$region %in% targRegion) & (models$seas %in% targetSeas)]
+  } else if (stemDat$status[i] %in% "DEAD") {
+    coefficient <- models$coef.dead[(models$region %in% "all") & (models$seas %in% "all")]
+    exponent    <- models$exp.dead[(models$region %in% "all") & (models$seas %in% "all")]
+  }
+  # apply allometry to get mass estimate
+  stemDat$mass.est1[i] <- coefficient * (stemDat$hgt[i] ^ exponent) # season-region models for live, pooled model for dead
+  if (stemDat$status[i] %in% "LIVE") {
+    stemDat$mass.est2[i] <- models$coef.live[(models$region %in% "all")] * (stemDat$hgt[i] ^ models$exp.live[(models$region %in% "all")]) # single model for all data (always used for dead stems)
+  } else {
+    stemDat$mass.est2[i] <- NA
+  }
+  
+  # define final mass to be used
+  # set dummy variable if plant mass was actually measured
+  if (!is.na(stemDat$mass_tot[i])) {
+    stemDat$modeled[i] <- 0
+    stemDat$mass[i]    <- stemDat$mass_tot[i]
+  } else {
+    stemDat$modeled[i] <- 1
+    stemDat$mass[i]    <- stemDat$mass.est1[i]
+  }
+}
+
+
+
+
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

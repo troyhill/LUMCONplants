@@ -1,0 +1,36 @@
+Package: LUMCONplants
+Type: Package
+Title: Allometry and Plant Dynamics in Louisiana Universities Marine Consortium Salt Marshes
+Version: 0.0.1
+Authors@R: c(
+    person(c("Troy", "D."), "Hill", role = c("aut", "cre"), 
+    email = "Hill.Troy@gmail.com", comment = c(ORCID = "0000-0003-2980-4099")),
+    person("Ryann", "Rossi", role = "ctb", email = "RRossi@lumcon.edu"),
+    person("Brian", "Roberts", role = "ctb", email = "BRoberts@lumcon.edu", comment = c(ORCID = "0000-0002-6366-3165")),
+    person()
+    )
+URL: https://github.com/troyhill/LUMCONplants
+BugReports: https://github.com/troyhill/LUMCONplants/issues
+Description: Allometry models and plant productivity data for LUMCON salt marshes.
+    Builds on data and analysis presented in Hill and Roberts 2017 (Ecology and Evolution; <DOI: 10.1002/ece3.3494>). Data included represent stem- and plot-level plant dynamics, soil physical and chemical characteristics, and water quality parameters.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Depends:
+    R (>= 3.0),
+    zoo,
+    car,
+    MASS
+Suggests: 
+    ggplot2,
+    knitr,
+    plyr,
+    rmarkdown,
+    testthat,
+    covr,
+    reshape2,
+    scales,
+    MuMIn,
+    rsq
+VignetteBuilder: knitr
