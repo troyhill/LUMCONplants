@@ -2,7 +2,7 @@
 
 export(bCM)
 export(getParams)
-export(nappCalc2)
+export(nappCalc)
 export(se)
 export(seasonLabel)
 importFrom(MASS,boxcox)

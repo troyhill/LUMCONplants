@@ -16,7 +16,7 @@
 #' @importFrom zoo as.yearmon
 #'
 #' @export
-nappCalc2 <- function(
+nappCalc <- function(
   dataset,
   liveCol = "mass",
   deadCol = "dead",

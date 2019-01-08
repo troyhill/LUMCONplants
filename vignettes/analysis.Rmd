@@ -11,6 +11,8 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE, echo = FALSE}
+### This section loads libraries, sets some local variables
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>" 
@@ -52,8 +54,8 @@ library(LUMCONplants)
 
 ### define some constants
 plotSize       <- 0.25 * 0.25  # size of quadrat, m2
-coreTube       <- pi*(6.9/2)^2 # area of plastic coring tube: cm2 
-coreTube_metal <- pi*(6.0/2)^2 # area of metal coring device: cm2 
+coreTube       <- pi*(6.9/2)^2 # area of plastic coring tube used prior to August 2016: units = cm2 
+coreTube_metal <- pi*(6.5/2)^2 # area of metal coring device used beginning in August 2016: units = cm2 
 bagMass        <- 5.4          # grams; bags used for belowground cores
 
 tckSize        <- 0.01
@@ -63,6 +65,7 @@ tckSize        <- 0.01
 
 
 ```{r allometry models, echo = FALSE, include = FALSE, message = FALSE}
+### This section parameterizes allometry models and uses the models to estimate unknown stem masses
 
 stemDat$moYr  <- paste0(stemDat$mo, "-", substr(stemDat$yr, 3, 4))
 stemDat$time  <- as.yearmon(stemDat$moYr, "%b-%y")
@@ -147,12 +150,8 @@ for (i in 1:nrow(stemDat)) {
 ```
 
 
-```{r aggregate to plot-level data, echo = FALSE, include = FALSE, message = FALSE}
-
-```
-
-
 ```{r trends in stem demographics, echo = FALSE, include = FALSE, message = FALSE}
+### This section explores trends in stem size class distributions
 
 getDemographics <- function(data = stemDat, status = "LIVE", groupBreaks = c(0, 25, 50, 100, 200), groupLabels = c("0-25 cm", "25-50 cm", "50-100 cm", ">100 cm"), quadrat_m2 = 1) {
   df1 <- transform(data[(data$status %in% status), ], group = cut(hgt, 
@@ -209,6 +208,24 @@ for (i in 1:length(unique(final_df$group)[1:3])) {
 ```
 
 
+
+```{r aggregate to plot-level data, echo = FALSE, include = FALSE, message = FALSE}
+### Here we aggregate stem-level data up to the plot-level, to enable NAPP estimates
+CWC.plots <- ddply(biomass, .(marsh, season, monthYear, site, quadrat, type), summarise,
+                   mass         =  sum(mass, na.rm = T) / plotSize,
+                   stems        =  length(type[!type %in% "LITTER"]) / plotSize,
+                   lngth.median =  median(hgt, na.rm = T),
+                   lngth.range  =  diff(range(hgt, na.rm = T))
+                   )
+
+
+```
+
+
+
+
+
+
 ## Allometry data
 
 ```{r allometry by season-year, fig.width = 6, fig.height = 6, echo=FALSE, warning=FALSE, fig.cap = "Mass-height allometry at LUMCON marshes, by season (rows) and year (columns)."}
@@ -234,3 +251,46 @@ stm.demographics
 ```
 
 
+
+## NAPP
+
+
+```{r NAPP calculations, echo = FALSE, include = FALSE, message = FALSE}
+### This section explores NAPP using the bioDat object
+bioDat$moYr <- paste0(bioDat$mo, "-", substr(bioDat$yr, 3, 4))
+bioDat$monthYear <- as.yearmon(bioDat$moYr, "%b-%y")
+bioDat <- seasonLabel(data = bioDat)
+
+marsh.biomass <- ddply(bioDat, .(region, site, yr, season, monthYear), summarise,
+               above          =  mean(mass, na.rm = T),
+               above.se       =  se(mass),
+               stemDensity    =  mean(stems, na.rm = T),
+               stemDensity.se =  se(stems),
+               mass.dead      =  mean(mass.dead, na.rm = T), # stem biomass only
+               mass.dead.se   =  se(mass.dead),              # stem biomass only
+               litter         =  mean(litter, na.rm = TRUE),
+               litter.se      =  se(litter),
+               above.dead     =  mean(mass.dead, na.rm = T) + mean(litter, na.rm = TRUE), # stems + litter
+               above.dead.se  =  sqrt(se(mass.dead)^2 + se(litter)^2),
+               live.bg        =  mean(live.bg.gm2, na.rm = TRUE),
+               live.bg.se     =  se(live.bg.gm2),
+               dead.bg        =  mean(live.bg.gm2, na.rm = TRUE),
+               dead.bg.se     =  se(dead.bg.gm2),
+               tot.bg         =  mean(tot.bg.gm2, na.rm = TRUE),
+               tot.bg.se      =  se(tot.bg.gm2)
+)
+
+
+### plot biomass over time
+abv <- ggplot(marsh.biomass[marsh.biomass$region %in% "LUMCON", ], aes(y = above, x = monthYear)) + geom_pointrange(aes(ymax = above + above.se, ymin = above - above.se)) + theme_classic() + facet_grid(site ~ .)
+
+### NAPP
+# "dead" column in napp is the sum of standing dead and litter
+napp2 <- nappCalc(napp, summarize = "TRUE", EOS = "TRUE", EOS_window = 0)
+NAPP_columns <- c(5:6, 8:9, 17) # columns with NAPP estimates of interest
+
+# napp2$summary
+
+
+
+```
