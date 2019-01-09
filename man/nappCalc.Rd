@@ -20,7 +20,7 @@ nappCalc(dataset, liveCol = "above", deadCol = "above.dead",
 
 \item{siteCol}{site/plot/experimental unit identifier}
 
-\item{timeCol}{column with timestamps (in form "%b %Y"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.}
+\item{timeCol}{column with timestamps (in form "mmm yyyy", e.g., "Jan 2015"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.}
 
 \item{annualReset}{should data be reset to zero each year}
 

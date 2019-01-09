@@ -5,7 +5,7 @@
 #' @param deadCol name of column with dead biomass data
 #' @param yearCol name of column with year data
 #' @param siteCol site/plot/experimental unit identifier
-#' @param timeCol column with timestamps (in form "%b %Y"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.
+#' @param timeCol column with timestamps (in form "mmm yyyy", e.g., "Jan 2015"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.
 #' @param annualReset should data be reset to zero each year
 #' @param MilnerHughes if "TRUE", also implements Millner & Hughes 1968 (sum of positive changes in standing live biomass)
 #' @param EOS If "TRUE", end-of-season live biomass is reported. A column is appended showing live biomass in September (or closest month in dataset). If there was no sampling within some number of months (+- EOS_window) of September, value is reported as NA.
