@@ -4,31 +4,31 @@
 \alias{nappCalc}
 \title{Calculate net aboveground primary production}
 \usage{
-nappCalc(dataset, liveCol = "mass", deadCol = "dead",
-  yearCol = "year", siteCol = "pot2", timeCol = "day",
-  annualReset = "TRUE", MilnerHughes = "TRUE", EOS = "FALSE",
-  EOS_window = 1, summarize = "TRUE")
+nappCalc(dataset, liveCol = "above", deadCol = "above.dead",
+  yearCol = "yr", siteCol = "site", timeCol = "monthYear",
+  annualReset = TRUE, MilnerHughes = TRUE, EOS = FALSE,
+  EOS_window = 1, summarize = TRUE)
 }
 \arguments{
 \item{dataset}{data}
 
-\item{liveCol}{live biomass}
+\item{liveCol}{name of column with live biomass data}
 
-\item{deadCol}{dead biomass}
+\item{deadCol}{name of column with dead biomass data}
 
-\item{yearCol}{year}
+\item{yearCol}{name of column with year data}
 
 \item{siteCol}{site/plot/experimental unit identifier}
 
-\item{timeCol}{time column (sequential measurements within each year)}
+\item{timeCol}{column with timestamps (in form "%b %Y"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.}
 
 \item{annualReset}{should data be reset to zero each year}
 
-\item{MilnerHughes}{If "TRUE", Milner-Hughes NAPP is calculated}
+\item{MilnerHughes}{if "TRUE", also implements Millner & Hughes 1968 (sum of positive changes in standing live biomass)}
 
-\item{EOS}{If "TRUE", end-of-season live biomass is reported}
+\item{EOS}{If "TRUE", end-of-season live biomass is reported. A column is appended showing live biomass in September (or closest month in dataset). If there was no sampling within some number of months (+- EOS_window) of September, value is reported as NA.}
 
-\item{EOS_window}{window for EOSL}
+\item{EOS_window}{window used in EOSL detection.}
 
 \item{summarize}{If "TRUE", output will be a list with two elements: incremental data and summary data}
 }

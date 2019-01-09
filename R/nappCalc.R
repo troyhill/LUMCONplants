@@ -1,15 +1,15 @@
 #' Calculate net aboveground primary production
 #'
 #' @param dataset data
-#' @param liveCol live biomass
-#' @param deadCol dead biomass
-#' @param yearCol year
+#' @param liveCol name of column with live biomass data
+#' @param deadCol name of column with dead biomass data
+#' @param yearCol name of column with year data
 #' @param siteCol site/plot/experimental unit identifier
-#' @param timeCol time column (sequential measurements within each year)
+#' @param timeCol column with timestamps (in form "%b %Y"). Can be character vector but to reduce opportunity for error use zoo:yearmon. This only matters for the summary statistics, which report peak timing.
 #' @param annualReset should data be reset to zero each year
-#' @param MilnerHughes If "TRUE", Milner-Hughes NAPP is calculated
-#' @param EOS If "TRUE", end-of-season live biomass is reported
-#' @param EOS_window window for EOSL
+#' @param MilnerHughes if "TRUE", also implements Millner & Hughes 1968 (sum of positive changes in standing live biomass)
+#' @param EOS If "TRUE", end-of-season live biomass is reported. A column is appended showing live biomass in September (or closest month in dataset). If there was no sampling within some number of months (+- EOS_window) of September, value is reported as NA.
+#' @param EOS_window window used in EOSL detection.
 #' @param summarize If "TRUE", output will be a list with two elements: incremental data and summary data
 #'
 #' @return list
@@ -18,16 +18,16 @@
 #' @export
 nappCalc <- function(
   dataset,
-  liveCol = "mass",
-  deadCol = "dead",
-  yearCol = "year",
-  siteCol = "pot2",
-  timeCol = "day",
-  annualReset = "TRUE",
-  MilnerHughes = "TRUE",
-  EOS = "FALSE",
+  liveCol = "above",
+  deadCol = "above.dead",
+  yearCol = "yr",
+  siteCol = "site",
+  timeCol = "monthYear",
+  annualReset = TRUE,
+  MilnerHughes = TRUE,
+  EOS = FALSE,
   EOS_window = 1,
-  summarize = "TRUE"
+  summarize = TRUE
 ) {
   # requires that zoo library be loaded (time is converted to yearmon for finding EOS)
   # implements Smalley (1958) and Milner and Hughes (1968)
@@ -61,12 +61,19 @@ nappCalc <- function(
   #   PSC(napp[, 1:6])
 
   ### error checking
-  countsAsTrue  <- c("T", "TRUE", "true", "True")
-  countsAsFalse <- c("F", "FALSE", "false", "False")
-
-  if (!MilnerHughes %in% c(countsAsTrue, countsAsFalse)) {
-    stop ("`MilnerHughes` argument isn't recognized. Input can be either `TRUE` or `FALSE`.")
+  if (!is.logical(MilnerHughes)) {
+    stop ("`MilnerHughes` argument isn't TRUE/FALSE.")
   }
+  if (!is.logical(annualReset)) {
+    stop ("`annualReset` argument isn't TRUE/FALSE.")
+  }
+  if (!is.logical(EOS)) {
+    stop ("`EOS` argument isn't TRUE/FALSE.")
+  }
+  if (!is.logical(annualReset)) {
+    stop ("`annualReset` argument isn't TRUE/FALSE.")
+  }
+  
   if (sum(c(liveCol, deadCol, yearCol, siteCol) %in% names(dataset)) < 4) {
     stop ("Check column names. One or more column names were not found in the dataset.")
   }
@@ -88,9 +95,9 @@ nappCalc <- function(
   EOS_col     <- "eos"
 
   # define acceptable window for EOS measurement
-  EOS_target <- as.numeric(as.yearmon("Sep 2016", format = "%b %Y")) - 2016
-  EOS_high   <- as.numeric(as.yearmon(paste0(month.abb[grep("Sep", month.abb) + EOS_window], "2016"), format = "%b %Y")) - 2016
-  EOS_low   <- as.numeric(as.yearmon(paste0(month.abb[grep("Sep", month.abb) - EOS_window], "2016"), format = "%b %Y")) - 2016
+  EOS_target <- as.numeric(zoo::as.yearmon("Sep 2016", format = "%b %Y")) - 2016
+  EOS_high   <- as.numeric(zoo::as.yearmon(paste0(month.abb[grep("Sep", month.abb) + EOS_window], "2016"), format = "%b %Y")) - 2016
+  EOS_low   <- as.numeric(zoo::as.yearmon(paste0(month.abb[grep("Sep", month.abb) - EOS_window], "2016"), format = "%b %Y")) - 2016
 
   # more variables than necessary are appended to dataset
   tempData[, EOS_col] <- tempData[, PSC_B] <- tempData[, PSC_A] <- tempData[, VTS] <- tempData[, MH] <- tempData[, smalley] <- tempData[, smalley.inc] <-
@@ -157,7 +164,7 @@ nappCalc <- function(
 
       # if annualReset is TRUE, set the year's first increment to zero/NA
       # This doesn't assume NAPP goes to zero, but deals with each year separately
-      if (annualReset %in% countsAsTrue) {
+      if (annualReset) {
         subData2[1, c(live.inc, dead.inc, smalley.inc, eV)]   <- 0
       }
 
@@ -180,13 +187,13 @@ nappCalc <- function(
 
       # find "end of season" biomass
       # may need to ensure that monthly data exist? could pose a problem when assigning EOS_biomass and querying months.
-      if(EOS %in% countsAsTrue) {
+      if(EOS) {
         # if no sampling occurred in September, widen window
-        if (round(EOS_target, 2) %in% round((as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol])))), 2)) {
-          EOS_biomass <- subData2[, liveCol][(as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol]))) == EOS_target)] # +
-          #subData2[, deadCol][(as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol]))) == EOS_target)]
-          # } else if(sum(c(round(seq(from = EOS_low, to = EOS_high, by = 1/12), 2) %in% round((as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol])))), 2))) >= 1) {
-          # EOS_biomass <- max(subData2[, liveCol][(as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol]))) >= EOS_low) | (as.numeric(as.yearmon(subData2[, timeCol])) - floor(as.numeric(as.yearmon(subData2[, timeCol]))) <= EOS_high)], na.rm = TRUE)
+        if (round(EOS_target, 2) %in% round((as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol])))), 2)) {
+          EOS_biomass <- subData2[, liveCol][(as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol]))) == EOS_target)] # +
+          #subData2[, deadCol][(as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol]))) == EOS_target)]
+          # } else if(sum(c(round(seq(from = EOS_low, to = EOS_high, by = 1/12), 2) %in% round((as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol])))), 2))) >= 1) {
+          # EOS_biomass <- max(subData2[, liveCol][(as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol]))) >= EOS_low) | (as.numeric(zoo::as.yearmon(subData2[, timeCol])) - floor(as.numeric(zoo::as.yearmon(subData2[, timeCol]))) <= EOS_high)], na.rm = TRUE)
         } else {
           EOS_biomass <- NA
         }
@@ -203,15 +210,15 @@ nappCalc <- function(
       tempData[(tempData[, siteCol] %in% targetSite) & (tempData[, yearCol] %in% targetYear), VTS]      <- subData2[, VTS]
       tempData[(tempData[, siteCol] %in% targetSite) & (tempData[, yearCol] %in% targetYear), PSC_A]    <- subData2[, PSC_A]
       tempData[(tempData[, siteCol] %in% targetSite) & (tempData[, yearCol] %in% targetYear), PSC_B]    <- subData2[, PSC_B]
-      if(EOS %in% countsAsTrue) {
+      if(EOS) {
         tempData[(tempData[, siteCol] %in% targetSite) & (tempData[, yearCol] %in% targetYear), EOS_col]   <- subData2[, EOS_col]
       }
     }
   }
 
-  if (summarize %in% countsAsFalse) {
+  if (!summarize) {
     output <- tempData
-  } else if (summarize %in% countsAsTrue) {
+  } else if (summarize) {
     for (i in 1:length(unique(tempData[, siteCol]))) {
       # print(i)
       targetSite <- unique(tempData[, siteCol])[i]
@@ -228,19 +235,19 @@ nappCalc <- function(
           napp.smalley = max(subData2[, smalley], na.rm = T),
           napp.MH      = max(subData2[, MH], na.rm = T),
           napp.maxMin  = max(subData2[, maxMin], na.rm = T),
-          # napp.VTS     = max(subData2[, VTS], na.rm = T),
+          napp.VTS     = max(subData2[, VTS], na.rm = T),
           napp.psc.a   = max(subData2[, PSC_A], na.rm = T),
           napp.psc.b   = max(subData2[, PSC_B], na.rm = T),
           n            = sum(!is.na(subData2[, liveCol])),
           t.smalley    = ifelse(is.finite(max(subData2[, smalley], na.rm = T)), as.character(subData2[, timeCol][which.max(subData2[, smalley])]), NA),
           t.MH         = ifelse(is.finite(max(subData2[, MH], na.rm = T)), as.character(subData2[, timeCol][which.max(subData2[, MH])]), NA),
-          # t.vts        = as.character(subData2[, timeCol][which.max(subData2[, VTS])]),
+          t.vts        = as.character(subData2[, timeCol][which.max(subData2[, VTS])]),
           t.psc.a      = as.character(subData2[, timeCol][which.max(subData2[, PSC_A])]),
           t.psc.b      = as.character(subData2[, timeCol][which.max(subData2[, PSC_B])])
         )
 
         # ADD EOS to intdata if EOS == TRUE
-        if (EOS %in% countsAsTrue) {
+        if (EOS) {
           intData$napp.EOS <- ifelse(sum(is.na(subData2[, EOS_col])) == length(subData2[, EOS_col]),
                                      NA, max(subData2[, EOS_col], na.rm = T))
         }
