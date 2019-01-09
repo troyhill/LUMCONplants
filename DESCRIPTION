@@ -32,5 +32,6 @@ Suggests:
     reshape2,
     scales,
     MuMIn,
-    rsq
+    rsq,
+    Hmisc
 VignetteBuilder: knitr

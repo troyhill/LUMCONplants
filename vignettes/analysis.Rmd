@@ -42,6 +42,9 @@ if(!require(MuMIn)){
 if(!require(rsq)){
   install.packages("rsq", repos='http://cran.us.r-project.org')
 }
+if(!require(Hmisc)){
+  install.packages("scales", repos='http://cran.us.r-project.org')
+}
 
 
 library(ggplot2)
@@ -99,10 +102,9 @@ regionLabel <- function(data, siteCol = "site") {
 ### from http://myowelt.blogspot.com/2008/04/beautiful-correlation-tables-in-r.html
 ### usage: kable(corstarsl(as.matrix(data))) 
 corstarsl <- function(x){
-  require(Hmisc)
   x <- as.matrix(x)
-  R <- rcorr(x)$r
-  p <- rcorr(x)$P
+  R <- Hmisc::rcorr(x)$r
+  p <- Hmisc::rcorr(x)$P
   
   ## define notions for significance levels; spacing is important.
   mystars <- ifelse(p < .001, "***", ifelse(p < .01, "** ", ifelse(p < .05, "* ", " ")))
