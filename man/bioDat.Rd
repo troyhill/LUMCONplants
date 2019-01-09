@@ -3,9 +3,9 @@
 \docType{data}
 \name{bioDat}
 \alias{bioDat}
-\title{plot-level biomass data}
+\title{plot-level data: above and belowground biomass}
 \format{A dataframe}
 \description{
-plot-level biomass data
+plot-level data: above and belowground biomass
 }
 \keyword{datasets}

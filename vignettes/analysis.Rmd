@@ -370,7 +370,7 @@ napp.correlations
 
 
 
-```{r table-correlations between NAPP estimates, echo=FALSE, warning=FALSE, fig.cap = "Correlations between NAPP estimates."}
+```{r table-correlations between NAPP estimates, echo=FALSE, warning=FALSE, message = FALSE, fig.cap = "Correlations between NAPP estimates."}
 
 # table with correlations between NAPP measures (for LUM only, all years)
 kable(corstarsl(as.matrix(napp[grepl(x = napp$site, pattern = "LUM"), NAPP_columns]))) # each site-year counted as independent obs
