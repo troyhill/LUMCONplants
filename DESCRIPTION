@@ -33,5 +33,7 @@ Suggests:
     scales,
     MuMIn,
     rsq,
-    Hmisc
+    Hmisc,
+    multcomp,
+    sandwich
 VignetteBuilder: knitr

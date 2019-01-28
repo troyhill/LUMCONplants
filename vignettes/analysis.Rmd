@@ -45,15 +45,23 @@ if(!require(rsq)){
 if(!require(Hmisc)){
   install.packages("Hmisc", repos='http://cran.us.r-project.org')
 }
-
+if(!require(multcomp)){
+  install.packages("multcomp", repos='http://cran.us.r-project.org')
+}
+if(!require(sandwich)){
+  install.packages("sandwich", repos='http://cran.us.r-project.org')
+}
+if(!require(car)){
+  install.packages("car", repos='http://cran.us.r-project.org')
+}
 
 library(ggplot2)
 library(plyr)
 library(LUMCONplants)
+library(multcomp) # for glht
+library(sandwich) # for HC3 estimator
+library(car) # for Levene's test
 
-# library(multcomp) # for glht
-# library(sandwich) # for HC3 estimator
-# library(car) # for Levene's test
 
 ### define some constants
 plotSize       <- 0.25 * 0.25  # size of quadrat, m2
@@ -139,7 +147,7 @@ stemDat$moYr  <- paste0(stemDat$mo, "-", substr(stemDat$yr, 3, 4))
 stemDat$time  <- as.yearmon(stemDat$moYr, "%b-%y")
 stemDat       <- seasonLabel(data = stemDat)
 stemDat$seas  <- substr(stemDat$season, 1, 4)
-stemDat$plantYr <- as.numeric(paste0(20, substr(stemDat$season, 6, 7))) # doesn't split winter samples (Jan 2018 is in winter 2017)
+stemDat$plantYr <- as.numeric(paste0(20, substr(stemDat$season, 6, 7))) # avoids splitting winter samples (Jan 2018 is in winter 2017)
 
 
 ### separate plot As for allometry work
@@ -171,10 +179,15 @@ exponents_vs_coefs <- ggplot(aes(y = exp.live, x = coef.live, colour = seas), da
 # spring = low coefficients, high exponents
 
 
-allom_by_seas <- ggplot(aes(y = mass_tot, x = hgt, colour = site), 
+allom_by_seas_plantYr <- ggplot(aes(y = mass_tot, x = hgt, colour = site), 
        data = stm[(stm$region %in% "LUMCON") & (stm$status %in% "LIVE"), ]) + 
   geom_point() + theme_classic() + labs(y = "mass", x = "hgt") + 
   facet_grid(seas ~ plantYr)
+
+allom_by_seas <- ggplot(aes(y = mass_tot, x = hgt, colour = site), 
+       data = stm[(stm$region %in% "LUMCON") & (stm$status %in% "LIVE"), ]) + 
+  geom_point() + theme_classic() + labs(y = "mass", x = "hgt") + 
+  facet_grid(seas ~ .)
 
 
 
@@ -213,6 +226,34 @@ for (i in 1:nrow(stemDat)) {
     stemDat$mass[i]    <- stemDat$mass.est1[i]
   }
 }
+
+
+```
+
+
+```{r allometry ANOVAs, echo = FALSE, include = FALSE, message = FALSE}
+### Identify differences between seasons in the LUMCON region (pooled)
+subData       <- stm[(stm$status %in% "LIVE") & !is.na(stm$hgt) & !is.na(stm$mass_tot) & (stm$region %in% "LUMCON"), ]
+subData$seas  <- ordered(subData$seas, c("sprg", "sumr", "fall", "wint"))
+full.nls <- nls(mass_tot ~ I(a * hgt^b), data = subData, start = list(a = 0.2, b = 0.2))
+summary(full.nls)
+
+subData$resid <- resid(full.nls)
+
+# Residuals have unequal variances among seasons (based on Levene Test and boxplots). 
+# To make comparisons I follow the procedure described in Herberich et al. 2010
+leveneTest(resid ~ seas, data = subData) 
+boxplot(resid ~ seas, data = subData)
+
+# ANOVA of residuals by seas
+modSeas          <- aov(resid ~ seas, data = subData)
+summary(modSeas) # F = 104.9 p<<0.001   DEAD: F = 3.2; p = 0.02
+
+# glht sets up multiple contrasts. vcov = vcovHC specifies heteroscedasticity-consistent estimator of covariance matrix (Herberich et al. 2010)
+modSeas_glht     <- glht(modSeas, linfct = mcp(seas = "Tukey"), vcov = vcovHC)
+coef(modSeas_glht)
+summary(modSeas_glht) 
+plot(confint(modSeas_glht)) # all seasons are significantly different. Dead stem allometry: no seasonal differences
 
 
 ```
@@ -259,16 +300,6 @@ for (i in 1:length(unique(final_df$group)[1:3])) {
 
 
 
-```{r aggregate to plot-level data, echo = FALSE, include = FALSE, message = FALSE}
-### Here we aggregate stem-level data up to the plot-level, to enable NAPP estimates
-
-
-```
-
-
-
-
-
 
 ## Allometry data
 
@@ -278,9 +309,10 @@ allom_by_seas
 
 ```
 
+Allometry models differ significantly by season, and seasonality has become more pronounced since Hill and Roberts (2017). 
 
 
-```{r allometry exponents and coefficients, fig.width = 3, fig.height = 3, warning=FALSE, echo=FALSE, fig.cap = "Relationship between allometry coefficients and exponents (one model for each marsh-season)."}
+```{r allometry exponents and coefficients, fig.width = 3.5, fig.height = 3, warning=FALSE, echo=FALSE, fig.cap = "Relationship between allometry coefficients and exponents (one model for each marsh-season)."}
 
 exponents_vs_coefs
 
