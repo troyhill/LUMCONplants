@@ -282,6 +282,16 @@ stm.demographics <- ggplot(final_df[final_df$region %in% "LUMCON",],
   theme_bw() %+replace% theme(strip.background  = element_blank(), legend.title = element_blank())
 
 
+### add in plot-level mass data
+mass_df <- ddply(stemDat, .(region, site, plot, time), summarise, 
+                 mass = mean(mass, na.rm = TRUE),
+                 mass.se = se(mass))
+mass_df2 <- join_all(list(mass_df, int_df))
+
+ggplot(mass_df2, aes(x = log(hgt.count), y = log(mass))) + geom_point() + theme_classic()
+
+
+
 # identify seasonality
 for (i in 1:length(unique(final_df$group)[1:3])) {
   test <- ts(final_df[(final_df$region %in% "LUMCON") & 
@@ -312,12 +322,13 @@ allom_by_seas
 Allometry models differ significantly by season, and seasonality has become more pronounced since Hill and Roberts (2017). 
 
 
-```{r allometry exponents and coefficients, fig.width = 3.5, fig.height = 3, warning=FALSE, echo=FALSE, fig.cap = "Relationship between allometry coefficients and exponents (one model for each marsh-season)."}
+```{r allometry exponents and coefficients, fig.width = 3.5, fig.height = 2.5, warning=FALSE, echo=FALSE, fig.cap = "Relationship between allometry coefficients and exponents (one model for each marsh-season)."}
 
 exponents_vs_coefs
 
 ```
 
+The relationship between allometry exponents and coefficients remains intact and is consistent with Hill and Roberts (2017).
 
 
 ```{r stem demographics, fig.width = 6, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Temporal trends in stem size classes across all LUMCON marshes (mean +- SE of three marshes)."}
@@ -325,6 +336,7 @@ exponents_vs_coefs
 stm.demographics
 
 ```
+
 
 
 
