@@ -288,7 +288,7 @@ exponents_vs_coefs
 
 
 
-```{r stem demographics, fig.width = 6, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Temporal trends in stem size classes at LUMCON marshes."}
+```{r stem demographics, fig.width = 6, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Temporal trends in stem size classes across all LUMCON marshes (mean +- SE of three marshes)."}
 
 stm.demographics
 
@@ -355,7 +355,7 @@ napp.correlations <- ggplot(napp.melt, aes(x = napp.smalley, y = value, col = va
 
 
 
-```{r figure-aboveground biomass over time, fig.width = 4, fig.height = 4, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "Biomass at LUMCON marshes."}
+```{r figure-aboveground biomass over time, fig.width = 4, fig.height = 4, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "Biomass at LUMCON marshes (mean +- SE of three plots)."}
 
 abv
 
@@ -364,7 +364,7 @@ abv
 
 
 
-```{r figure-correlations between NAPP estimates, fig.width = 4, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Correlations between NAPP estimates."}
+```{r figure-correlations between NAPP estimates, fig.width = 5, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Correlations between NAPP estimates."}
 
 napp.correlations
 
