@@ -10,6 +10,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+this is a test
+
+
 ```{r setup, include = FALSE, echo = FALSE}
 ### This section loads libraries, sets some local variables
 
