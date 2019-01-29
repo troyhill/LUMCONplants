@@ -45,9 +45,7 @@ if(!require(MuMIn)){
 if(!require(rsq)){
   install.packages("rsq", repos='http://cran.us.r-project.org')
 }
-if(!require(Hmisc)){
-  install.packages("Hmisc", repos='http://cran.us.r-project.org')
-}
+
 if(!require(multcomp)){
   install.packages("multcomp", repos='http://cran.us.r-project.org')
 }
@@ -471,7 +469,7 @@ napp.correlations
 ```{r table-correlations between NAPP estimates, echo=FALSE, warning=FALSE, message = FALSE, fig.cap = "Correlations between NAPP estimates."}
 
 # table with correlations between NAPP measures (for LUM only, all years)
-kable(corstarsl(as.matrix(napp[grepl(x = napp$site, pattern = "LUM"), NAPP_columns]))) # each site-year counted as independent obs
+# kable(corstarsl(as.matrix(napp[grepl(x = napp$site, pattern = "LUM"), NAPP_columns]))) # each site-year counted as independent obs
 
 ```
 
