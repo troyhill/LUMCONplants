@@ -33,6 +33,9 @@ if(!require(reshape2)){
 if(!require(ggplot2)){
   install.packages("ggplot2", repos='http://cran.us.r-project.org')
 }
+if(!require(gridExtra)){
+  install.packages("gridExtra", repos='http://cran.us.r-project.org')
+}
 if(!require(scales)){
   install.packages("scales", repos='http://cran.us.r-project.org')
 }
@@ -56,6 +59,7 @@ if(!require(car)){
 }
 
 library(ggplot2)
+library(gridExtra)
 library(plyr)
 library(LUMCONplants)
 library(multcomp) # for glht
@@ -67,8 +71,8 @@ library(car) # for Levene's test
 plotSize       <- 0.25 * 0.25  # size of quadrat, m2
 coreTube       <- pi*(6.9/2)^2 # area of plastic coring tube used prior to August 2016: units = cm2 
 coreTube_metal <- pi*(6.5/2)^2 # area of metal coring device used beginning in August 2016: units = cm2 
+growingMonths  <- 4:10         # growing season defined as April:October
 bagMass        <- 5.4          # grams; bags used for belowground cores
-
 tckSize        <- 0.01
 
 getDemographics <- function(data = stemDat, status = "LIVE", groupBreaks = c(0, 25, 50, 100, 200), groupLabels = c("0-25 cm", "25-50 cm", "50-100 cm", ">100 cm"), quadrat_m2 = 1) {
@@ -378,6 +382,13 @@ abv <- ggplot(marsh.biomass[marsh.biomass$region %in% "LUMCON", ], aes(y = above
 napp.full <- nappCalc(marsh.biomass, summarize = TRUE, EOS = TRUE, EOS_window = 0, annualReset = FALSE)
 napp <- regionLabel(napp.full$summary)
 
+
+napp.trend <- ggplot(napp[grepl(x = napp$site, pattern = "LUM"), ], aes(x = year, y = napp.smalley)) + 
+  geom_bar(stat = "identity") + theme_classic() + facet_grid(. ~ site) + 
+  labs(x = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), y = "")
+
+
+### correlations between NAPP estimates
 NAPP_columns <- c(5:6, 8:9, 17) # columns with NAPP estimates of interest
 
 
@@ -397,6 +408,41 @@ napp.correlations <- ggplot(napp.melt, aes(x = napp.smalley, y = value, col = va
 ```
 
 
+```{r NAPP drivers, echo = FALSE, include = FALSE, message = FALSE}
+### This section explores environmental drivers of biomass and NAPP using the plot-level biomass data (bioDat object) and soil/water data (nutDat) 
+
+### NAPP
+dd.nut <- ddply(nutDat[nutDat$month.number %in% growingMonths, ], .(year, region, site), 
+                numcolwise(mean, na.rm = TRUE))
+
+napp.nuts <- join_all(list(napp, dd.nut))
+
+
+### salinity relationships
+rsqr.salinity <- round(summary(lm(napp.smalley ~ salinity..psu., data = napp.nuts))$r.squared, 2)
+
+rsqr.salinity.lum <- round(summary(lm(napp.smalley ~ salinity..psu., data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
+
+
+napp.salt <- ggplot(napp.nuts, aes(x = salinity..psu., y = napp.smalley)) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm") + 
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creek salinity (psu)") # all data - looks nice
+
+napp.salt.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = salinity..psu., y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creek salinity (psu)") # weak!
+
+### NO3 relationship
+rsqr.no3 <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = napp.nuts))$r.squared, 2)
+
+rsqr.no3.lum <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
+
+
+napp.no3 <- ggplot(napp.nuts, aes(x = dissolved.no3...no2..mm., y = napp.smalley)) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm")  + 
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") # all data - looks pretty nice
+
+napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = dissolved.no3...no2..mm., y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") # weak
+
+```
 
 
 ```{r figure-aboveground biomass over time, fig.width = 4, fig.height = 4, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "Biomass at LUMCON marshes (mean +- SE of three plots)."}
@@ -405,6 +451,12 @@ abv
 
 ```
 
+
+```{r figure-NAPP over time, fig.width = 6, fig.height = 3.5, echo=FALSE, warning=FALSE, fig.cap = "Smalley NAPP over time at three LUMCON marshes."}
+
+napp.trend
+
+```
 
 
 
@@ -422,3 +474,16 @@ napp.correlations
 kable(corstarsl(as.matrix(napp[grepl(x = napp$site, pattern = "LUM"), NAPP_columns]))) # each site-year counted as independent obs
 
 ```
+
+
+
+
+```{r figure-NAPP drivers, fig.width = 7, fig.height = 6, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "NAPP vs. salinity and creek NO3, including all data (top row) and LUMCON only (bottom row)."}
+
+driver.fig <- arrangeGrob(napp.salt, napp.no3, napp.salt.lum, napp.no3.lum, nrow = 2)
+plot(driver.fig)
+```
+
+The relationships between NAPP and bay salinity/NO3 are reasonably strong when Terrebonne Bay sites are included (r2 = 0.46 and 0.23 for salinity and NO3, respectively) but disappear when the dataset is reduced to LUMCON sites (r2 = 0.03 and 0.04 for salinity and NO3, respectively). 
+
+
