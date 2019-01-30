@@ -4,3 +4,6 @@ inst/doc
 .RData
 .Ruserdata
 LUMCONplants.Rproj
+*.jpeg
+*.jpg
+*.png
