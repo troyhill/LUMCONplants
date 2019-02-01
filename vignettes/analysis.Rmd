@@ -437,7 +437,7 @@ rsqr.no3 <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = nap
 rsqr.no3.lum <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
 
 
-napp.no3 <- ggplot(napp.nuts, aes(x = dissolved.no3...no2..mm., y = napp.smalley)) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm")  + 
+napp.no3 <- ggplot(napp.nuts, aes(x = I(log(dissolved.no3...no2..mm.)), y = I(log(napp.smalley)))) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm")  + 
   labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") # all data - looks pretty nice
 
 napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = dissolved.no3...no2..mm., y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
@@ -486,5 +486,7 @@ plot(driver.fig)
 ```
 
 The relationships between NAPP and bay salinity/NO3 are reasonably strong when Terrebonne Bay sites are included (r2 = 0.46 and 0.23 for salinity and NO3, respectively) but disappear when the dataset is reduced to LUMCON sites (r2 = 0.03 and 0.04 for salinity and NO3, respectively). 
+
+
 
 
