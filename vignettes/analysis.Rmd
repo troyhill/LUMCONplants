@@ -236,6 +236,8 @@ for (i in 1:nrow(stemDat)) {
 ```
 
 
+
+
 ```{r allometry ANOVAs, echo = FALSE, include = FALSE, message = FALSE}
 ### Identify differences between seasons in the LUMCON region (pooled)
 subData       <- stm[(stm$status %in% "LIVE") & !is.na(stm$hgt) & !is.na(stm$mass_tot) & (stm$region %in% "LUMCON"), ]
@@ -327,6 +329,46 @@ allom_by_seas
 Allometry models differ significantly by season, and seasonality has become more pronounced since Hill and Roberts (2017). 
 
 
+```{r allometry plot 2, fig.width = 3.5, fig.height = 2.5, warning=FALSE, echo=FALSE, fig.cap = "Allometry models for LUMCON (6 years)."}
+
+sub <- stemDat[(stemDat$region %in% "LUMCON") & (stemDat$status %in% "LIVE"), ]
+fig2Col <- "gray40" # rgb(169, 169, 169, 140, maxColorValue = 255)
+pointSize <- 0.3
+tckSize <- 0.018
+lwdSize <- 1.5
+# png(filename = "allometry.png", width = 120, height = 120, units = "mm", res = 200)
+
+par(mar = c(2, 2, 0.5, 0.5))
+plot(sub$mass_tot ~ sub$hgt, 
+     cex = pointSize, pch = 19, col = fig2Col,
+     ylab = "", xlab = "", xlim = c(0, 172), ylim = c(0, 15.1), xaxt = "n", yaxt = "n",
+     las = 1, tcl = 0.25, tck = tckSize, bty = "n", yaxs = "i", xaxs = "i")
+abline(h = 0, lwd = lwdSize)
+abline(v = 0, lwd = 1.5*lwdSize)
+axis(side = 2, tcl = 0.25, tck = tckSize, at = axTicks(2), labels = FALSE, lwd = 1)
+mtext(side = 2, text = "Mass (g)", line = 1.2)
+mtext(side = 2, at = axTicks(2), text = axTicks(2), las = 1, line = 0.35)
+axis(side = 1, tcl = 0.25, tck = tckSize, at = axTicks(1), labels = FALSE, lwd = 1)
+mtext(text = axTicks(1), at = axTicks(1), side = 1, line = 0.2)
+mtext(text = "Height (cm)", side = 1, line = 1.1)
+
+x <- sub$hgt
+y.pred2 <- models$coef.live[(models$region %in% "LUMCON") & (models$seas %in% "sprg")] * x^models$exp.live[(models$region %in% "LUMCON") & (models$seas %in% "sprg")]
+y.pred3 <- models$coef.live[(models$region %in% "LUMCON") & (models$seas %in% "sumr")] * x^models$exp.live[(models$region %in% "LUMCON") & (models$seas %in% "sumr")]
+y.pred4 <- models$coef.live[(models$region %in% "LUMCON") & (models$seas %in% "fall")] * x^models$exp.live[(models$region %in% "LUMCON") & (models$seas %in% "fall")]
+y.pred5 <- models$coef.live[(models$region %in% "LUMCON") & (models$seas %in% "wint")] * x^models$exp.live[(models$region %in% "LUMCON") & (models$seas %in% "wint")] 
+lines(x = x[order(y.pred2)], y = y.pred2[order(y.pred2)], lty = 1, lwd = 2)
+lines(x = x[order(y.pred3)], y = y.pred3[order(y.pred3)], lty = 2, lwd = 2)
+lines(x = x[order(y.pred4)], y = y.pred4[order(y.pred4)], lty = 3, lwd = 2)
+lines(x = x[order(y.pred5)], y = y.pred5[order(y.pred5)], lty = 4, lwd = 2)
+legend(x = 4, y = 13, legend = c("Spring", "Summer", "Fall", "Winter"), 
+       lty = c(1:4), lwd = 2, bty = 'n', cex = 0.85)
+
+# dev.off()
+
+```
+
+
 ```{r allometry exponents and coefficients, fig.width = 3.5, fig.height = 2.5, warning=FALSE, echo=FALSE, fig.cap = "Relationship between allometry coefficients and exponents (one model for each marsh-season)."}
 
 exponents_vs_coefs
@@ -395,16 +437,15 @@ NAPP_columns <- c(5:6, 8:9, 17) # columns with NAPP estimates of interest
 
 
 
-napp.melt <- melt(napp[grepl(x = napp$site, pattern = "LUM"), c(2, NAPP_columns)], id.vars = c("napp.smalley", "year"))
+napp.melt <- melt(napp[grepl(x = napp$site, pattern = "LUM"), c(1, NAPP_columns)], id.vars = c("napp.smalley", "site"))
 levels(napp.melt$variable) <- c("Milner and hughes 1968", "Valiela et al. 1975", "Peak biomass", "End-of-season")
 
 napp.correlations <- ggplot(napp.melt, aes(x = napp.smalley, y = value, col = variable)) +
   geom_abline(slope = 1, intercept = 0, size = 0.7) + 
   labs(x = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), y = expression("NAPP (g "%.%m^-2%.%yr^-1~")")) + 
   theme_classic() + theme(legend.title = element_blank()) + 
-  geom_point(aes(shape = as.factor(year))) + ylim(0, 3800) + xlim(0, 3400) + 
+  geom_point(aes(shape = as.factor(site))) + ylim(0, 3800) + xlim(0, 3400) + 
   geom_smooth(data = napp.melt, method = lm, se = TRUE, linetype = 1, size = 0.7, alpha = 0.2)
-
 
 ```
 
@@ -464,6 +505,7 @@ napp.trend
 ```{r figure-correlations between NAPP estimates, fig.width = 5, fig.height = 4, echo=FALSE, warning=FALSE, fig.cap = "Correlations between NAPP estimates."}
 
 napp.correlations
+# ggsave("napp_correlations.png", width = 5.5, height = 4, units = "in")
 
 ```
 
