@@ -10,7 +10,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-this is a test
 
 
 ```{r setup, include = FALSE, echo = FALSE}
@@ -488,5 +487,38 @@ plot(driver.fig)
 The relationships between NAPP and bay salinity/NO3 are reasonably strong when Terrebonne Bay sites are included (r2 = 0.46 and 0.23 for salinity and NO3, respectively) but disappear when the dataset is reduced to LUMCON sites (r2 = 0.03 and 0.04 for salinity and NO3, respectively). 
 
 
+NDVI and Aboveground Biomass Relationship
+```{r}
+#creating new dataset with 2017-2018 data only (since that is what NDVI data we have)
+LUM<-subset(bioDat, region=="LUMCON")
+LUM1718<-subset(LUM, yr > 2016)
+library(Rmisc)
+library(tidyverse)
+library(lattice)
+library(nlme)
+library(lubridate)
+library(svglite)
+
+#creating new dataset of aboveground biomass with means.
+mean.mass<-summarySE(data=LUM1718, measurevar="mass", groupvars= c("site", "yr", "mo"))
+
+#this is the NDVI data
+ndvi<-read_csv("ndvi_lum.csv")
+
+
+#Merge ndvi and lum data
+mydata<-merge(ndvi, mean.mass, by=c("site","yr","mo"))
+
+plot(avg.ndvi~mass, data=mydata)
+
+rsqr.ndvi<- round(summary(lm(mass ~ avg.ndvi, data = mydata))$r.squared, 2)
+
+mass.ndvi <- ggplot(mydata, aes(x = avg.ndvi, y = mass)) + geom_point(aes(colour = site)) + theme_classic() + 
+  geom_smooth(method = "lm") + labs(x = ("NDVI"), y = expression("Aboveground biomass (g "%.%m^-2*")")) # all data - looks nice
+mass.ndvi
+#rsq is 0.33   
+
+
+```
 
 
