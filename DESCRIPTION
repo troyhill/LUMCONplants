@@ -1,7 +1,7 @@
 Package: LUMCONplants
 Type: Package
 Title: Allometry and Plant Dynamics in Louisiana Universities Marine Consortium Salt Marshes
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
     person(c("Troy", "D."), "Hill", role = c("aut", "cre"), 
     email = "Hill.Troy@gmail.com", comment = c(ORCID = "0000-0003-2980-4099")),
@@ -35,5 +35,10 @@ Suggests:
     rsq,
     Hmisc,
     multcomp,
-    sandwich
+    sandwich,
+    Rmisc,
+    tidyverse,
+    lattice,
+    nlme,
+    lubridate
 VignetteBuilder: knitr

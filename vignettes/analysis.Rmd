@@ -57,6 +57,24 @@ if(!require(sandwich)){
 if(!require(car)){
   install.packages("car", repos='http://cran.us.r-project.org')
 }
+if(!require(Rmisc)){
+  install.packages("Rmisc", repos='http://cran.us.r-project.org')
+}
+if(!require(tidyverse)){
+  install.packages("tidyverse", repos='http://cran.us.r-project.org')
+}
+if(!require(lattice)){
+  install.packages("lattice", repos='http://cran.us.r-project.org')
+}
+if(!require(nlme)){
+  install.packages("nlme", repos='http://cran.us.r-project.org')
+}
+if(!require(lubridate)){
+  install.packages("lubridate", repos='http://cran.us.r-project.org')
+}
+# if(!require(svglite)){
+#   install.packages("svglite", repos='http://cran.us.r-project.org')
+# }
 
 library(ggplot2)
 library(gridExtra)
@@ -65,6 +83,13 @@ library(LUMCONplants)
 library(multcomp) # for glht
 library(sandwich) # for HC3 estimator
 library(car) # for Levene's test
+
+library(Rmisc)
+library(tidyverse)
+library(lattice)
+library(nlme)
+library(lubridate)
+# library(svglite) # doesn't install properly on linux
 
 
 ### define some constants
@@ -460,27 +485,27 @@ napp.nuts <- join_all(list(napp, dd.nut))
 
 
 ### salinity relationships
-rsqr.salinity <- round(summary(lm(napp.smalley ~ salinity..psu., data = napp.nuts))$r.squared, 2)
+rsqr.salinity <- round(summary(lm(napp.smalley ~ salinity.psu.bay, data = napp.nuts))$r.squared, 2)
 
-rsqr.salinity.lum <- round(summary(lm(napp.smalley ~ salinity..psu., data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
+rsqr.salinity.lum <- round(summary(lm(napp.smalley ~ salinity.psu.bay, data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
 
 
-napp.salt <- ggplot(napp.nuts, aes(x = salinity..psu., y = napp.smalley)) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm") + 
+napp.salt <- ggplot(napp.nuts, aes(x = salinity.psu.bay, y = napp.smalley)) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm") + 
   labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creek salinity (psu)") # all data - looks nice
 
-napp.salt.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = salinity..psu., y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
+napp.salt.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = salinity.psu.bay, y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
   labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creek salinity (psu)") # weak!
 
 ### NO3 relationship
-rsqr.no3 <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = napp.nuts))$r.squared, 2)
+rsqr.no3 <- round(summary(lm(napp.smalley ~ dissolved.no3.no2.bay, data = napp.nuts))$r.squared, 2)
 
-rsqr.no3.lum <- round(summary(lm(napp.smalley ~ dissolved.no3...no2..mm., data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
+rsqr.no3.lum <- round(summary(lm(napp.smalley ~ dissolved.no3.no2.bay, data = napp.nuts[napp.nuts$region %in% "LUMCON", ]))$r.squared, 2)
 
 
-napp.no3 <- ggplot(napp.nuts, aes(x = I(log(dissolved.no3...no2..mm.)), y = I(log(napp.smalley)))) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm")  + 
+napp.no3 <- ggplot(napp.nuts, aes(x = I(log(dissolved.no3.no2.bay)), y = I(log(napp.smalley)))) + geom_point(aes(colour = site)) + theme_classic() + geom_smooth(method = "lm")  + 
   labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") # all data - looks pretty nice
 
-napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = dissolved.no3...no2..mm., y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
+napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = dissolved.no3.no2.bay, y = napp.smalley, colour = site)) + geom_point() + theme_classic() + geom_smooth(method = "lm") + 
   labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") # weak
 
 ```
@@ -529,23 +554,19 @@ plot(driver.fig)
 The relationships between NAPP and bay salinity/NO3 are reasonably strong when Terrebonne Bay sites are included (r2 = 0.46 and 0.23 for salinity and NO3, respectively) but disappear when the dataset is reduced to LUMCON sites (r2 = 0.03 and 0.04 for salinity and NO3, respectively). 
 
 
-NDVI and Aboveground Biomass Relationship
-```{r}
+## NDVI and Aboveground Biomass Relationship
+
+```{r NDVI-biomass relationships, echo = FALSE, include = FALSE, message = FALSE}
 #creating new dataset with 2017-2018 data only (since that is what NDVI data we have)
 LUM<-subset(bioDat, region=="LUMCON")
 LUM1718<-subset(LUM, yr > 2016)
-library(Rmisc)
-library(tidyverse)
-library(lattice)
-library(nlme)
-library(lubridate)
-library(svglite)
 
 #creating new dataset of aboveground biomass with means.
 mean.mass<-summarySE(data=LUM1718, measurevar="mass", groupvars= c("site", "yr", "mo"))
 
 #this is the NDVI data
-ndvi<-read_csv("ndvi_lum.csv")
+# ndvi <- read_csv("ndvi_lum.csv")
+# usethis::use_data(ndvi, overwrite = TRUE)
 
 
 #Merge ndvi and lum data
@@ -557,10 +578,41 @@ rsqr.ndvi<- round(summary(lm(mass ~ avg.ndvi, data = mydata))$r.squared, 2)
 
 mass.ndvi <- ggplot(mydata, aes(x = avg.ndvi, y = mass)) + geom_point(aes(colour = site)) + theme_classic() + 
   geom_smooth(method = "lm") + labs(x = ("NDVI"), y = expression("Aboveground biomass (g "%.%m^-2*")")) # all data - looks nice
+
+
+##making text larger for figure
+exp_vs_coefs <- ggplot(aes(y = exp.live, x = coef.live, colour = seas), data = models) + geom_point(size=3) + theme_classic() + labs(y = "exponent", x = "coefficient") +
+  theme(text = element_text(size=14))
+# spring = low coefficients, high exponents
+##salt figure
+napp.salt.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = salinity.psu.bay, y = napp.smalley, colour = site)) + geom_point(size=3) + theme_classic() +  
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creek salinity (psu)") + theme(text = element_text(size=14))  # weak!
+
+
+##no3 figure
+napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = dissolved.no3.no2.bay, y = napp.smalley, colour = site)) + geom_point(size=3) + theme_classic() + 
+  labs(y = expression("Smalley NAPP (g "%.%m^-2%.%yr^-1~")"), x = "Creekwater NO3 (uM)") + theme(text = element_text(size=14)) # weak
+
+
+#stem density figure
+live.stem<- summarySE(data=LUM, measurevar = "stems", groupvars=c("site", "yr", "mo"))
+dead.stem<- summarySE(data=LUM, measurevar = "stems.dead", groupvars=c("site", "yr", "mo"))
+
+```
+
+
+```{r figure-NDVI_biomass, fig.width = 4, fig.height = 4, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "NDVI vs. aboveground biomass."}
 mass.ndvi
 #rsq is 0.33   
 
-
+ggplot(live.stem, 
+       aes(y = stems, x = as.numeric(time))) + #, col = region)) + 
+  geom_point(size = 1.2) + geom_errorbar(aes(ymin = (stmDens - stmDens.se), ymax = (stmDens + stmDens.se)), width = 0) +
+  geom_line(lwd = 0.7) +
+  theme_classic() + theme(legend.title = element_blank()) + 
+  ylab(expression("Live stem density (m"^-2~")")) + xlab("") + 
+  facet_wrap("group", nrow = 2) + 
+  theme_bw() %+replace% theme(strip.background  = element_blank(), legend.title = element_blank())
 ```
 
 

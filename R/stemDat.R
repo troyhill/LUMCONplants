@@ -18,7 +18,7 @@
 #' \item{flwr}{dummy variable indicating flowering status (1 = inflorescence/infructescence present). Inconsistently censused.}
 #' \item{flwr_len}{length of inflorescence/infructescence. Units = centimeters}
 #' \item{flwr_mass}{mass of inflorescence/infructescence. Units = grams}
-#' \item{moYr}{month-year of sampling (form = "%b-%Y")}
+#' \item{moYr}{month-year of sampling (form = "\%b-\%Y")}
 #' \item{time}{month-year of sampling as yearmon data type}
 #' \item{season}{season-year of sampling}
 #' \item{seas}{season of sampling}

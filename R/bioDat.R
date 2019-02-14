@@ -1,5 +1,5 @@
 #' plot-level data: above and belowground biomass
-#' @format A dataframe
+#' @format A dataframe with the following columns:
 #' \describe{
 #' \item{yr}{year of sample collection}
 #' \item{mo}{month of sample collection (3-character form)}
