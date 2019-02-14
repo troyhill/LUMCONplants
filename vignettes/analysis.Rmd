@@ -595,8 +595,8 @@ napp.no3.lum <- ggplot(napp.nuts[napp.nuts$region %in% "LUMCON", ], aes(x = diss
 
 
 #stem density figure
-live.stem<- summarySE(data=LUM, measurevar = "stems", groupvars=c("site", "yr", "mo"))
-dead.stem<- summarySE(data=LUM, measurevar = "stems.dead", groupvars=c("site", "yr", "mo"))
+live.stem<- summarySE(data=LUM, measurevar = "stems", groupvars=c("site", "yr", "mo", "monthYear"))
+dead.stem<- summarySE(data=LUM, measurevar = "stems.dead", groupvars=c("site", "yr", "mo", "monthYear"))
 
 ```
 
@@ -608,14 +608,14 @@ mass.ndvi
 ```
 
 ```{r figure-NDVI_biomass2, fig.width = 4, fig.height = 4, echo=FALSE, message = FALSE, warning=FALSE, fig.cap = "NDVI vs. aboveground biomass."}
-# ggplot(live.stem,
-#        aes(y = stems, x = as.numeric(time))) + #, col = region)) +
-#   geom_point(size = 1.2) + geom_errorbar(aes(ymin = (stmDens - stmDens.se), ymax = (stmDens + stmDens.se)), width = 0) +
-#   geom_line(lwd = 0.7) +
-#   theme_classic() + theme(legend.title = element_blank()) +
-#   ylab(expression("Live stem density (m"^-2~")")) + xlab("") +
-#   facet_wrap("group", nrow = 2) +
-#   theme_bw() %+replace% theme(strip.background  = element_blank(), legend.title = element_blank())
+ggplot(live.stem,
+       aes(y = stems, x = as.numeric(monthYear))) + #, col = region)) +
+  geom_point(size = 1.2) + geom_errorbar(aes(ymin = (stems - se), ymax = (stems + se)), width = 0) +
+  geom_line(lwd = 0.7) +
+  theme_classic() + theme(legend.title = element_blank()) +
+  ylab(expression("Live stem density (m"^-2~")")) + xlab("") +
+  # facet_wrap("group", nrow = 2) +
+  theme_bw() %+replace% theme(strip.background  = element_blank(), legend.title = element_blank())
 ```
 
 
