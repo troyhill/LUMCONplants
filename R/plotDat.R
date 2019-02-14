@@ -1,4 +1,4 @@
-#' plot-level data: soil and water nutrients and physical parameters
+#' plot-level data: biomass, soil, and water nutrient and physical parameters
 #' @format A dataframe the following variables:
 #' \describe{
 #' \item{year}{year of sample collection}
@@ -10,6 +10,16 @@
 #' \item{long}{longitude, decimal degrees}
 #' \item{dist}{distance from marsh edge, meters}
 #' \item{plot}{plot name (A, B, C)}
+#' \item{stems}{live stem density. Units: stems per square meter}
+#' \item{lngth.median}{median live stem length. Units = centimenters}
+#' \item{mass}{total live biomass in plot. Units = grams per square meter}
+#' \item{stems.dead}{dead stem density. Units: stems per square meter}
+#' \item{lngth.median.dead}{median dead stem length. Units = centimenters}
+#' \item{mass.dead}{total dead standing biomass in plot. Units = grams per square meter}
+#' \item{litter}{total litter biomass in plot. Units = grams per square meter}
+#' \item{live.bg.gm2}{live belowground biomass to a depth of 30 cm. Units = grams per square meter}
+#' \item{dead.bg.gm2}{dead belowground biomass to a depth of 30 cm. Units = grams per square meter}
+#' \item{tot.bg.gm2}{total belowground biomass to a depth of 30 cm. Units = grams per square meter}
 #' \item{temp.soil}{soil temperature in degrees C}
 #' \item{ph.soil}{soil pH in pH units}
 #' \item{bulk.density.g.cm3.soil}{soil bulk density in grams per cubic centimeter}
@@ -41,7 +51,7 @@
 #' }
 #' @docType data
 #' @keywords datasets
-#' @name nutDat
+#' @name plotDat
 NULL
 
 ### Code used to produce dataset:
@@ -65,7 +75,7 @@ NULL
 # ### This data is in C:\Users\tdh\Documents\LUMCON\Allometry\GRIIDC\dataset12_all_years_20190110.xlsx
 # ### It will continue to be updated
 # 
-# nutDat <- read.delim("C:/RDATA/LUMCON/allometry_preprocessing/plot_data/data_soil_water_all_years_20190213.txt", skip = 2, stringsAsFactors = FALSE)
+# nutDat <- read.delim("C:/RDATA/LUMCON/allometry_preprocessing/plot_data/data_soil_water_all_years_20190109.txt", skip = 2, stringsAsFactors = FALSE)
 # names(nutDat) <- tolower(names(nutDat))
 # nutDat$site   <- gsub(x = trimws(nutDat$site), pattern = " ", replacement = "")
 # nutDat$plot   <- gsub(x = trimws(nutDat$plot), pattern = " |[1-9]", replacement = "")
@@ -85,3 +95,12 @@ NULL
 # 
 # # usethis::use_data(nutDat, overwrite = TRUE)
 # # write.csv(nutDat, file = "C:/RDATA/LUMCON/allometry_preprocessing/plot_data/plotDataProcessed.csv", row.names = FALSE)
+# 
+# # create merged dataset 12 ------------------------------------------------
+# bioDat2 <- bioDat
+# names(bioDat2)[1:3] <- c("year", "month.name", "month.number")
+# plotDat <- join_all(list(bioDat2, nutDat))
+# head(plotDat)
+# 
+# # write.csv(plotDat, file = "inst/extdata/plotData_2013_2018.csv", row.names = FALSE)
+# # usethis::use_data(plotDat, overwrite = TRUE)
