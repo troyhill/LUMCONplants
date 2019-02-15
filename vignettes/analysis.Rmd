@@ -95,7 +95,7 @@ library(lubridate)
 ### define some constants
 plotSize       <- 0.25 * 0.25  # size of quadrat, m2
 coreTube       <- pi*(6.9/2)^2 # area of plastic coring tube used prior to August 2016: units = cm2 
-coreTube_metal <- pi*(6.5/2)^2 # area of metal coring device used beginning in August 2016: units = cm2 
+coreTube_metal <- pi*(5.8/2)^2 # area of metal coring device used beginning in August 2016: units = cm2 
 growingMonths  <- 4:10         # growing season defined as April:October
 bagMass        <- 5.4          # grams; bags used for belowground cores
 tckSize        <- 0.01
